@@ -170,18 +170,20 @@ def init_db() -> bool:
         return False
 
     try:
-        # Step 1: Ensure database exists (for local MySQL if allowed)
+        # Step 1: Ensure database exists (only if target database is not already reachable)
         try:
-            conn_server = get_db_connection(use_database=False, force_retry=True)
-            cur = conn_server.cursor()
-            cur.execute(f"CREATE DATABASE IF NOT EXISTS `{config.DB_NAME}` DEFAULT CHARACTER SET utf8mb4;")
-            conn_server.commit()
-            cur.close()
-            conn_server.close()
-        except Exception as db_create_err:
-            # On restricted cloud databases, user may not have CREATE DATABASE privilege.
-            # That is normal if the cloud provider already provisioned the database.
-            logger.debug(f"Notice during database check: {_sanitize_error_msg(db_create_err)}")
+            conn_test = get_db_connection(use_database=True, force_retry=True)
+            conn_test.close()
+        except Exception:
+            try:
+                conn_server = get_db_connection(use_database=False, force_retry=True)
+                cur = conn_server.cursor()
+                cur.execute(f"CREATE DATABASE IF NOT EXISTS `{config.DB_NAME}` DEFAULT CHARACTER SET utf8mb4;")
+                conn_server.commit()
+                cur.close()
+                conn_server.close()
+            except Exception as db_create_err:
+                logger.debug(f"Notice during database check: {_sanitize_error_msg(db_create_err)}")
 
         # Step 2: Read and execute schema statements against target database
         with open(schema_file, "r", encoding="utf-8") as f:
