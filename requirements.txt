@@ -1,0 +1,16 @@
+# Study Smarter - Production Dependencies
+# Install via: pip install -r requirements.txt
+
+# Web Application Framework
+streamlit>=1.30.0
+pandas>=2.0.0
+
+# Environment & Configuration Management
+python-dotenv>=1.0.0
+
+# MySQL Database Driver (Cloud & Local)
+mysql-connector-python>=8.2.0
+
+# PDF Ingestion, Text Extraction & Verification
+pypdf>=4.0.0
+reportlab>=4.0.0

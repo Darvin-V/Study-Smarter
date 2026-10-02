@@ -1,0 +1,53 @@
+# =========================================================
+# Study Smarter - Production .gitignore
+# =========================================================
+
+# Environment variables & secrets (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+.streamlit/secrets.toml
+
+# Python bytecode and compiled cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Logs & Runtime telemetry
+logs/
+*.log
+
+# Uploaded and temporary PDF files
+uploads/
+*.pdf.tmp
+
+# Streamlit local runtime state
+.streamlit/*.local.toml
+
+# IDE, Editor & OS Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Test scratch & temporary outputs
+scratch/
+test_*.pdf
+audit_*.pdf

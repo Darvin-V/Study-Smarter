@@ -1,0 +1,451 @@
+{
+  "10": {
+    "Science": {
+      "Chemical Reactions and Equations": [
+        "Chemical Equations and Balancing",
+        "Types of Chemical Reactions",
+        "Corrosion and Rancidity"
+      ],
+      "Acids, Bases and Salts": [
+        "Chemical Properties of Acids and Bases",
+        "pH Scale and Importance in Everyday Life",
+        "Salts and Chemicals from Common Salt"
+      ],
+      "Metals and Non-metals": [
+        "Physical and Chemical Properties of Metals",
+        "Reactivity Series and Extraction of Metals",
+        "Corrosion and Prevention"
+      ],
+      "Carbon and its Compounds": [
+        "Covalent Bonding in Carbon Compounds",
+        "Saturated and Unsaturated Carbon Compounds",
+        "Chemical Properties of Carbon Compounds",
+        "Ethanol and Ethanoic Acid",
+        "Soaps and Detergents"
+      ],
+      "Life Processes": [
+        "Nutrition in Plants and Animals",
+        "Respiration in Humans",
+        "Transportation in Humans and Plants",
+        "Excretion in Humans and Plants"
+      ],
+      "Control and Coordination": [
+        "Nervous System and Reflex Arc",
+        "Human Brain Structure and Functions",
+        "Coordination in Plants and Tropisms",
+        "Hormones in Animals"
+      ],
+      "How do Organisms Reproduce?": [
+        "Asexual Modes of Reproduction",
+        "Sexual Reproduction in Flowering Plants",
+        "Human Reproductive System",
+        "Reproductive Health"
+      ],
+      "Heredity": [
+        "Mendel's Laws of Inheritance",
+        "Sex Determination in Humans"
+      ],
+      "Light - Reflection and Refraction": [
+        "Reflection by Spherical Mirrors",
+        "Mirror Formula and Magnification",
+        "Refraction of Light and Snell's Law",
+        "Refraction through Lenses and Lens Formula",
+        "Power of Lens"
+      ],
+      "Human Eye and Colourful World": [
+        "Structure of Human Eye and Defects of Vision",
+        "Refraction of Light through Prism",
+        "Dispersion of White Light",
+        "Atmospheric Refraction and Scattering of Light"
+      ],
+      "Electricity": [
+        "Electric Current and Circuit",
+        "Electric Potential and Potential Difference",
+        "Ohm's Law and Resistance",
+        "Factors affecting Resistance and Resistivity",
+        "Series and Parallel Combination of Resistors",
+        "Heating Effect of Electric Current and Power"
+      ],
+      "Magnetic Effects of Electric Current": [
+        "Magnetic Field and Field Lines",
+        "Magnetic Field due to Current Carrying Conductor",
+        "Right Hand Thumb Rule and Solenoid",
+        "Force on Current Carrying Conductor in Magnetic Field",
+        "Domestic Electric Circuits"
+      ],
+      "Our Environment": [
+        "Ecosystem and its Components",
+        "Food Chains and Food Webs",
+        "Ozone Layer Depletion and Waste Management"
+      ]
+    },
+    "Mathematics": {
+      "Real Numbers": [
+        "Euclid's Division Lemma",
+        "Fundamental Theorem of Arithmetic",
+        "Revisiting Irrational Numbers and Proofs"
+      ],
+      "Polynomials": [
+        "Geometrical Meaning of Zeros of Polynomial",
+        "Relationship between Zeros and Coefficients",
+        "Division Algorithm for Polynomials"
+      ],
+      "Pair of Linear Equations in Two Variables": [
+        "Graphical Method of Solution",
+        "Algebraic Methods: Substitution and Elimination",
+        "Equations Reducible to Linear Form"
+      ],
+      "Quadratic Equations": [
+        "Standard Form of Quadratic Equation",
+        "Solution by Factorisation and Completing the Square",
+        "Nature of Roots and Discriminant"
+      ],
+      "Arithmetic Progressions": [
+        "Definition and nth Term of AP",
+        "Sum of First n Terms of AP"
+      ],
+      "Triangles": [
+        "Similar Figures and Similarity Criteria",
+        "Basic Proportionality Theorem (Thales Theorem)",
+        "Areas of Similar Triangles",
+        "Pythagoras Theorem and Converse"
+      ],
+      "Coordinate Geometry": [
+        "Distance Formula",
+        "Section Formula and Midpoint",
+        "Area of Triangle in Coordinate Plane"
+      ],
+      "Introduction to Trigonometry": [
+        "Trigonometric Ratios of Acute Angles",
+        "Trigonometric Ratios of Specific Angles (0, 30, 45, 60, 90)",
+        "Trigonometric Identities"
+      ],
+      "Some Applications of Trigonometry": [
+        "Heights and Distances Problems",
+        "Angle of Elevation and Depression"
+      ],
+      "Circles": [
+        "Tangent to a Circle and Theorem",
+        "Number of Tangents from a Point to a Circle"
+      ],
+      "Areas Related to Circles": [
+        "Perimeter and Area of Circle",
+        "Area of Sector and Segment of Circle"
+      ],
+      "Surface Areas and Volumes": [
+        "Surface Area of Combination of Solids",
+        "Volume of Combination of Solids",
+        "Conversion of Solid from One Shape to Another"
+      ],
+      "Statistics": [
+        "Mean of Grouped Data (Direct, Assumed Mean)",
+        "Mode of Grouped Data",
+        "Median of Grouped Data"
+      ],
+      "Probability": [
+        "Classical Definition of Probability",
+        "Event Types and Theoretical Problems"
+      ]
+    }
+  },
+  "12": {
+    "Physics": {
+      "Electric Charges and Fields": [
+        "Electric Charge and Conservation",
+        "Coulomb's Law and Electrostatic Force",
+        "Electric Field and Field Lines",
+        "Electric Dipole and Dipole Moment",
+        "Gauss's Law and Applications"
+      ],
+      "Electrostatic Potential and Capacitance": [
+        "Electric Potential and Equipotential Surfaces",
+        "Potential Energy of System of Charges",
+        "Capacitors and Capacitance",
+        "Parallel Plate Capacitor with Dielectric",
+        "Combination of Capacitors in Series and Parallel"
+      ],
+      "Current Electricity": [
+        "Electric Current and Drift Velocity",
+        "Ohm's Law, Resistance and Resistivity",
+        "Electrical Energy and Power",
+        "Kirchhoff's Rules and Applications",
+        "Wheatstone Bridge and Meter Bridge"
+      ],
+      "Moving Charges and Magnetism": [
+        "Biot-Savart Law and Applications",
+        "Ampere's Circuital Law and Solenoid",
+        "Force on Moving Charge in Magnetic Field",
+        "Cyclotron Principle",
+        "Moving Coil Galvanometer and Conversion"
+      ],
+      "Magnetism and Matter": [
+        "Bar Magnet as Equivalent Solenoid",
+        "Magnetic Field Lines and Gauss's Law in Magnetism",
+        "Earth's Magnetism and Elements",
+        "Diamagnetic, Paramagnetic and Ferromagnetic Substances"
+      ],
+      "Electromagnetic Induction": [
+        "Faraday's Laws of Electromagnetic Induction",
+        "Lenz's Law and Conservation of Energy",
+        "Eddy Currents and Self/Mutual Inductance",
+        "AC Generator Principle"
+      ],
+      "Alternating Current": [
+        "AC Voltage Applied to Resistor, Inductor and Capacitor",
+        "LCR Series Circuit and Resonance",
+        "Power in AC Circuit and Power Factor",
+        "Transformers Principle and Losses"
+      ],
+      "Electromagnetic Waves": [
+        "Displacement Current",
+        "Electromagnetic Wave Characteristics",
+        "Electromagnetic Spectrum and Uses"
+      ],
+      "Ray Optics and Optical Instruments": [
+        "Reflection and Refraction at Spherical Surfaces",
+        "Total Internal Reflection and Optical Fibres",
+        "Lens Maker's Formula and Refraction through Prism",
+        "Microscope and Astronomical Telescope"
+      ],
+      "Wave Optics": [
+        "Huygens' Principle and Wavefronts",
+        "Young's Double Slit Experiment and Interference",
+        "Diffraction at a Single Slit",
+        "Polarisation of Light"
+      ],
+      "Dual Nature of Radiation and Matter": [
+        "Photoelectric Effect and Observations",
+        "Einstein's Photoelectric Equation",
+        "de Broglie Hypothesis and Matter Waves"
+      ],
+      "Atoms": [
+        "Rutherford's Alpha Particle Scattering Experiment",
+        "Bohr's Model of Hydrogen Atom",
+        "Hydrogen Energy Levels and Line Spectra"
+      ],
+      "Nuclei": [
+        "Composition and Size of Nucleus",
+        "Mass Defect and Binding Energy Curve",
+        "Nuclear Fission and Fusion"
+      ],
+      "Semiconductor Electronics": [
+        "Energy Bands in Solids (Intrinsics & Extrinsics)",
+        "p-n Junction Diode Formation and V-I Characteristics",
+        "Diode as a Rectifier (Half Wave & Full Wave)",
+        "Special Purpose Diodes (LED, Solar Cell, Photodiode)"
+      ]
+    },
+    "Chemistry": {
+      "Solutions": [
+        "Types of Solutions and Concentration Units",
+        "Solubility of Gases (Henry's Law)",
+        "Raoult's Law and Vapor Pressure",
+        "Colligative Properties and Molar Mass Determination",
+        "Abnormal Molar Mass and vant Hoff Factor"
+      ],
+      "Electrochemistry": [
+        "Galvanic Cells and Nernst Equation",
+        "Conductance of Electrolytic Solutions and Kohlrausch Law",
+        "Electrolysis and Faraday's Laws",
+        "Batteries, Fuel Cells and Corrosion"
+      ],
+      "Chemical Kinetics": [
+        "Rate of Reaction and Rate Law",
+        "Order and Molecularity of Reaction",
+        "Integrated Rate Equations (Zero and First Order)",
+        "Half-life of a Reaction",
+        "Arrhenius Equation and Activation Energy"
+      ],
+      "The d- and f-Block Elements": [
+        "General Trends in Properties of Transition Elements",
+        "Lanthanoid Contraction and Consequences",
+        "Preparation and Properties of K2Cr2O7 and KMnO4"
+      ],
+      "Coordination Compounds": [
+        "Werner's Theory of Coordination Compounds",
+        "IUPAC Nomenclature of Coordination Compounds",
+        "Isomerism in Coordination Compounds",
+        "Valence Bond Theory and Crystal Field Theory"
+      ],
+      "Haloalkanes and Haloarenes": [
+        "Nomenclature and Nature of C-X Bond",
+        "Methods of Preparation of Haloalkanes and Haloarenes",
+        "SN1 and SN2 Nucleophilic Substitution Mechanisms",
+        "Polyhalogen Compounds and Uses"
+      ],
+      "Alcohols, Phenols and Ethers": [
+        "Classification and IUPAC Nomenclature",
+        "Preparation of Alcohols and Phenols",
+        "Physical and Chemical Properties of Alcohols and Phenols",
+        "Preparation and Properties of Ethers"
+      ],
+      "Aldehydes, Ketones and Carboxylic Acids": [
+        "Nomenclature and Structure of Carbonyl Group",
+        "Preparation of Aldehydes and Ketones",
+        "Nucleophilic Addition Reactions of Carbonyl Compounds",
+        "Acidity and Chemical Reactions of Carboxylic Acids"
+      ],
+      "Amines": [
+        "Classification, Structure and Nomenclature of Amines",
+        "Preparation Methods of Primary Amines",
+        "Basic Character of Amines",
+        "Diazonium Salts Preparation and Synthetic Importance"
+      ],
+      "Biomolecules": [
+        "Classification of Carbohydrates (Glucose & Fructose)",
+        "Amino Acids, Peptide Bond and Proteins Structure",
+        "Enzymes and Vitamins Classification",
+        "Structure of Nucleic Acids (DNA & RNA)"
+      ]
+    },
+    "Biology": {
+      "Sexual Reproduction in Flowering Plants": [
+        "Flower Structure and Microsporogenesis",
+        "Megasporogenesis and Embryo Sac",
+        "Pollination Types and Agencies",
+        "Double Fertilization and Post-Fertilization Events"
+      ],
+      "Human Reproduction": [
+        "Male and Female Reproductive Systems",
+        "Gametogenesis (Spermatogenesis & Oogenesis)",
+        "Menstrual Cycle Phases",
+        "Fertilization, Implantation and Pregnancy"
+      ],
+      "Reproductive Health": [
+        "Reproductive Health Problems and Strategies",
+        "Contraceptive Methods",
+        "Infertility and Assisted Reproductive Technologies (ART)"
+      ],
+      "Principles of Inheritance and Variation": [
+        "Mendel's Laws of Inheritance",
+        "Inheritance of One Gene and Two Genes",
+        "Sex Determination Mechanisms",
+        "Genetic Disorders (Mendelian and Chromosomal)"
+      ],
+      "Molecular Basis of Inheritance": [
+        "Structure of DNA and RNA",
+        "DNA Replication Mechanism",
+        "Transcription and Genetic Code",
+        "Translation and Protein Synthesis",
+        "Lac Operon Model"
+      ],
+      "Evolution": [
+        "Origin of Life Theories",
+        "Evidences for Evolution",
+        "Adaptive Radiation and Biological Evolution",
+        "Hardy-Weinberg Principle",
+        "Human Evolution"
+      ],
+      "Biotechnology: Principles and Processes": [
+        "Principles of Biotechnology",
+        "Tools of Recombinant DNA Technology (Restriction Enzymes)",
+        "Processes of Recombinant DNA Technology (PCR, Gel Electrophoresis)"
+      ]
+    },
+    "Mathematics": {
+      "Relations and Functions": [
+        "Types of Relations (Reflexive, Symmetric, Transitive, Equivalence)",
+        "Types of Functions (One-one, Onto, Bijective)",
+        "Composition of Functions and Invertible Functions"
+      ],
+      "Inverse Trigonometric Functions": [
+        "Definition, Range, Domain and Principal Value Branches",
+        "Graphs of Inverse Trigonometric Functions",
+        "Properties of Inverse Trigonometric Functions"
+      ],
+      "Matrices": [
+        "Concept, Notation, Order and Types of Matrices",
+        "Matrix Operations (Addition, Multiplication)",
+        "Transpose of Matrix and Symmetric/Skew-Symmetric Matrices",
+        "Invertible Matrices and Inverse of Matrix"
+      ],
+      "Determinants": [
+        "Determinant of a Square Matrix",
+        "Properties of Determinants",
+        "Area of a Triangle using Determinants",
+        "Minors, Cofactors, Adjoint and Inverse of Matrix",
+        "Solving System of Linear Equations using Matrix Inverse"
+      ],
+      "Continuity and Differentiability": [
+        "Continuity of a Function",
+        "Differentiability and Chain Rule",
+        "Derivative of Implicit Functions and Inverse Trig Functions",
+        "Exponential and Logarithmic Differentiation",
+        "Second Order Derivatives"
+      ],
+      "Application of Derivatives": [
+        "Rate of Change of Quantities",
+        "Increasing and Decreasing Functions",
+        "Tangents and Normals",
+        "Maxima and Minima (First and Second Derivative Tests)"
+      ],
+      "Integrals": [
+        "Indefinite Integration as Inverse of Differentiation",
+        "Integration Methods (Substitution, Parts, Partial Fractions)",
+        "Definite Integrals and Fundamental Theorem of Calculus",
+        "Properties of Definite Integrals"
+      ],
+      "Application of Integrals": [
+        "Area under Simple Curves",
+        "Area between Two Curves"
+      ],
+      "Differential Equations": [
+        "Order and Degree of Differential Equations",
+        "General and Particular Solutions",
+        "Solving First Order First Degree DEs (Separable, Homogeneous, Linear)"
+      ],
+      "Vector Algebra": [
+        "Vectors and Scalars, Direction Cosines",
+        "Types of Vectors and Addition of Vectors",
+        "Dot (Scalar) Product of Vectors",
+        "Cross (Vector) Product of Vectors"
+      ],
+      "Three Dimensional Geometry": [
+        "Direction Cosines and Direction Ratios of a Line",
+        "Equation of a Line in Space (Vector & Cartesian)",
+        "Shortest Distance between Two Lines (Skew Lines)",
+        "Equation of a Plane"
+      ],
+      "Probability": [
+        "Conditional Probability",
+        "Multiplication Theorem on Probability",
+        "Independent Events",
+        "Bayes' Theorem and Applications",
+        "Random Variable and Probability Distribution"
+      ]
+    },
+    "Computer Science": {
+      "Python Revision Tour": [
+        "Tokens, Data Types, Control Statements",
+        "Strings, Lists, Tuples, Dictionaries Operations"
+      ],
+      "Functions": [
+        "User-defined Functions and Arguments",
+        "Scope of Variables (Local vs Global)",
+        "Passing Parameters to Functions"
+      ],
+      "Data File Handling": [
+        "Text File Operations (Read, Write, Append)",
+        "Binary File Operations using Pickle Module",
+        "CSV File Operations using CSV Module"
+      ],
+      "Data Structures": [
+        "Stack Implementation using Lists",
+        "Push and Pop Operations"
+      ],
+      "Computer Networks": [
+        "Evolution of Networking and Network Types (LAN, MAN, WAN)",
+        "Network Topologies and Media",
+        "Network Devices (Hub, Switch, Router, Gateway)",
+        "Web Services and Protocols (HTTP, FTP, TCP/IP, DNS)"
+      ],
+      "Database Concepts and SQL": [
+        "Relational Database Concepts (Key, Candidate Key, Primary Key)",
+        "DDL Commands (CREATE, ALTER, DROP)",
+        "DML Commands (SELECT, INSERT, UPDATE, DELETE)",
+        "SQL Aggregate Functions and GROUP BY, HAVING, ORDER BY",
+        "Joining Tables in SQL"
+      ]
+    }
+  }
+}
