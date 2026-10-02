@@ -46,12 +46,11 @@ class QuizService:
                     and not any(kw in q.explanation.lower() for kw in bad_kw)
                 ]
 
-                # Fetch IDs already attempted by this user in this bank
+                # Fetch IDs already attempted by this user in this bank (lightweight integer set)
                 already_attempted_ids: set = set()
                 try:
                     from src.database.attempt_repository import AttemptRepository
-                    logs = AttemptRepository.get_user_attempts(user_id=user_id, bank_id=bank_id)
-                    already_attempted_ids = {row.get("question_id") for row in logs if row.get("question_id")}
+                    already_attempted_ids = AttemptRepository.get_attempted_question_ids(user_id=user_id, bank_id=bank_id)
                 except Exception:
                     pass
 

@@ -13,7 +13,7 @@ from src.database.attempt_repository import AttemptRepository
 from src.models.schemas import TopicPerformanceModel
 
 
-@st.cache_data(ttl=2, show_spinner=False)
+@st.cache_data(ttl=60, show_spinner=False)
 def _fetch_user_attempt_logs(user_id: int = 1, bank_id: Optional[int] = None) -> List[Dict[str, Any]]:
     """Retrieves raw attempt logs from MySQL with short-lived TTL caching for fast page navigation."""
     if MYSQL_AVAILABLE:
@@ -67,7 +67,7 @@ class AnalyticsService:
         distinct_quizzes = len({item.get("quiz_id") for item in logs if item.get("quiz_id") is not None})
 
         # Calculate topic-wise metrics to find strongest & weakest topics
-        topic_breakdown = cls.get_topic_accuracy_breakdown(user_id, bank_id=bank_id)
+        topic_breakdown = cls.get_topic_accuracy_breakdown(user_id, bank_id=bank_id, logs=logs)
 
         strongest_topic = "N/A"
         weakest_topic = "N/A"
@@ -88,12 +88,18 @@ class AnalyticsService:
         }
 
     @classmethod
-    def get_topic_accuracy_breakdown(cls, user_id: int = 1, bank_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    def get_topic_accuracy_breakdown(
+        cls,
+        user_id: int = 1,
+        bank_id: Optional[int] = None,
+        logs: Optional[List[Dict[str, Any]]] = None
+    ) -> List[Dict[str, Any]]:
         """
         Calculates topic-wise accuracy and categorizes each into Strong, Average, or Weak
         using configurable thresholds from Config (WEAK_TOPIC_THRESHOLD, STRONG_TOPIC_THRESHOLD).
         """
-        logs = cls._get_raw_attempt_logs(user_id, bank_id=bank_id)
+        if logs is None:
+            logs = cls._get_raw_attempt_logs(user_id, bank_id=bank_id)
         stats: Dict[str, Dict[str, Any]] = {}
 
         for item in logs:

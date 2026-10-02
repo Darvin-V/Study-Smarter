@@ -41,27 +41,6 @@ class AttemptRepository:
             "question_text": q.question_text if q else "",
         })
 
-        # Validate foreign keys exist to satisfy MySQL relational integrity constraints
-        valid_quiz_id = attempt.quiz_id
-        if valid_quiz_id is not None:
-            try:
-                with get_db_cursor() as check_cur:
-                    check_cur.execute("SELECT id FROM quizzes WHERE id = %s", (valid_quiz_id,))
-                    if not check_cur.fetchone():
-                        valid_quiz_id = None
-            except Exception:
-                valid_quiz_id = None
-
-        valid_user_id = attempt.user_id
-        if valid_user_id is not None:
-            try:
-                with get_db_cursor() as check_cur:
-                    check_cur.execute("SELECT id FROM users WHERE id = %s", (valid_user_id,))
-                    if not check_cur.fetchone():
-                        valid_user_id = None
-            except Exception:
-                valid_user_id = None
-
         query = """
             INSERT INTO attempts (
                 user_id, quiz_id, question_id, selected_answer,
@@ -70,18 +49,37 @@ class AttemptRepository:
                 %s, %s, %s, %s, %s, %s, %s
             )
         """
-        params = (
-            valid_user_id,
-            valid_quiz_id,
-            attempt.question_id,
-            attempt.selected_answer,
-            attempt.correct_answer,
-            attempt.is_correct,
-            attempt.time_taken,
-        )
 
         try:
             with get_db_cursor() as cursor:
+                # Fast path: Validate foreign keys within the single cursor transaction only when necessary
+                valid_quiz_id = attempt.quiz_id
+                if valid_quiz_id is not None:
+                    try:
+                        cursor.execute("SELECT id FROM quizzes WHERE id = %s", (valid_quiz_id,))
+                        if not cursor.fetchone():
+                            valid_quiz_id = None
+                    except Exception:
+                        valid_quiz_id = None
+
+                valid_user_id = attempt.user_id
+                if valid_user_id is not None and valid_user_id != 1:
+                    try:
+                        cursor.execute("SELECT id FROM users WHERE id = %s", (valid_user_id,))
+                        if not cursor.fetchone():
+                            valid_user_id = None
+                    except Exception:
+                        valid_user_id = None
+
+                params = (
+                    valid_user_id,
+                    valid_quiz_id,
+                    attempt.question_id,
+                    attempt.selected_answer,
+                    attempt.correct_answer,
+                    attempt.is_correct,
+                    attempt.time_taken,
+                )
                 cursor.execute(query, params)
                 attempt_id = cursor.lastrowid
                 logger.info(f"Recorded attempt ID={attempt_id} for Question ID={attempt.question_id}")
@@ -272,6 +270,63 @@ class AttemptRepository:
         if bank_id is not None:
             mem = [a for a in mem if a.get("bank_id") == bank_id]
         return len({a.get("question_id") for a in mem})
+
+    @staticmethod
+    def get_unique_questions_attempted_by_banks(user_id: int, bank_ids: List[int]) -> Dict[int, int]:
+        """
+        Returns count of DISTINCT questions attempted by a user grouped by bank_id in a single query.
+        Eliminates N+1 database queries on dashboard/home pages.
+        """
+        if not bank_ids:
+            return {}
+        result: Dict[int, int] = {bid: 0 for bid in bank_ids}
+        try:
+            placeholders = ",".join(["%s"] * len(bank_ids))
+            query = f"""
+                SELECT q.bank_id, COUNT(DISTINCT a.question_id) AS unique_count
+                FROM attempts a
+                JOIN questions q ON a.question_id = q.id
+                WHERE a.user_id = %s AND q.bank_id IN ({placeholders})
+                GROUP BY q.bank_id
+            """
+            params = tuple([user_id] + list(bank_ids))
+            with get_db_cursor() as cursor:
+                cursor.execute(query, params)
+                for row in cursor.fetchall() or []:
+                    bid = row.get("bank_id") if isinstance(row, dict) else row[0]
+                    cnt = row.get("unique_count") if isinstance(row, dict) else row[1]
+                    if bid is not None:
+                        result[int(bid)] = int(cnt)
+            return result
+        except Exception as err:
+            logger.info(f"Batch unique count query notice: {err}")
+            return result
+
+    @staticmethod
+    def get_attempted_question_ids(user_id: int, bank_id: Optional[int] = None) -> set:
+        """
+        Returns set of question_ids attempted by user without joining heavy question data.
+        Optimized for quiz generation question pooling.
+        """
+        try:
+            if bank_id is not None:
+                query = """
+                    SELECT DISTINCT a.question_id
+                    FROM attempts a
+                    JOIN questions q ON a.question_id = q.id
+                    WHERE a.user_id = %s AND q.bank_id = %s
+                """
+                params = (user_id, bank_id)
+            else:
+                query = "SELECT DISTINCT question_id FROM attempts WHERE user_id = %s"
+                params = (user_id,)
+            with get_db_cursor() as cursor:
+                cursor.execute(query, params)
+                rows = cursor.fetchall() or []
+                return {r.get("question_id") if isinstance(r, dict) else r[0] for r in rows if (r.get("question_id") if isinstance(r, dict) else r[0]) is not None}
+        except Exception as err:
+            logger.info(f"Attempted question IDs query notice: {err}")
+            return set()
 
     @staticmethod
     def get_quiz_history(user_id: int, bank_id: Optional[int] = None) -> List[Dict[str, Any]]:

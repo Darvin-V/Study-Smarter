@@ -83,21 +83,34 @@ def get_db_connection(use_database: bool = True, force_retry: bool = False):
         if use_database and config.DB_NAME:
             if _DB_POOL is None:
                 try:
-                    from mysql.connector.pooling import MySQLConnectionPool
                     pool_args = dict(conn_args)
                     pool_args["pool_name"] = "studysmarter_pool"
                     pool_args["pool_size"] = 5
-                    _DB_POOL = MySQLConnectionPool(**pool_args)
+                    try:
+                        import streamlit as st
+                        if hasattr(st, "cache_resource"):
+                            @st.cache_resource(show_spinner=False)
+                            def _get_st_pool(_args):
+                                from mysql.connector.pooling import MySQLConnectionPool
+                                return MySQLConnectionPool(**_args)
+                            _DB_POOL = _get_st_pool(pool_args)
+                    except Exception:
+                        pass
+
+                    if _DB_POOL is None:
+                        from mysql.connector.pooling import MySQLConnectionPool
+                        _DB_POOL = MySQLConnectionPool(**pool_args)
                 except Exception as pool_err:
                     logger.debug(f"Connection pooling bypassed: {_sanitize_error_msg(pool_err)}")
                     _DB_POOL = False
 
             if _DB_POOL:
                 conn = _DB_POOL.get_connection()
-                try:
-                    conn.ping(reconnect=True, attempts=2, delay=1)
-                except Exception:
-                    pass
+                if force_retry or not conn.is_connected():
+                    try:
+                        conn.ping(reconnect=True, attempts=2, delay=1)
+                    except Exception:
+                        pass
                 _LAST_FAIL_TIME = 0.0
                 return conn
 
@@ -213,7 +226,11 @@ def init_db() -> bool:
         raise DatabaseQueryError(f"Database schema initialization failed: {safe_msg}") from err
 
 
-def check_database_health() -> Dict[str, Any]:
+_HEALTH_CACHE: Dict[str, Any] = {}
+_HEALTH_CACHE_TIME: float = 0.0
+
+
+def check_database_health(force: bool = False) -> Dict[str, Any]:
     """
     Performs safe internal database health check without leaking credentials:
     - connection established
@@ -222,7 +239,13 @@ def check_database_health() -> Dict[str, Any]:
     - questions table accessible
     - question_banks table accessible
     Returns safe status dictionary.
+    Safe 60-second TTL cache prevents repeated remote Aiven health checks.
     """
+    global _HEALTH_CACHE, _HEALTH_CACHE_TIME
+    now = time.time()
+    if not force and _HEALTH_CACHE and (now - _HEALTH_CACHE_TIME < 60):
+        return _HEALTH_CACHE.copy()
+
     if not MYSQL_AVAILABLE:
         return {
             "healthy": False,
@@ -233,7 +256,7 @@ def check_database_health() -> Dict[str, Any]:
         }
 
     try:
-        conn = get_db_connection(use_database=True, force_retry=True)
+        conn = get_db_connection(use_database=True, force_retry=force)
         if not conn or not conn.is_connected():
             return {
                 "healthy": False,
@@ -245,25 +268,17 @@ def check_database_health() -> Dict[str, Any]:
 
         cur = conn.cursor(dictionary=True)
 
-        # 1. SELECT 1 ping
-        cur.execute("SELECT 1 AS ping")
-        ping_res = cur.fetchone()
-        ping_ok = bool(ping_res and (ping_res.get("ping") == 1 or list(ping_res.values())[0] == 1))
-
-        # 2. Expected database
-        cur.execute("SELECT DATABASE() AS current_db")
-        db_res = cur.fetchone()
-        selected_db = db_res.get("current_db") if db_res else None
-
-        # 3. questions table accessible
-        cur.execute("SELECT COUNT(*) AS cnt FROM questions")
-        q_row = cur.fetchone()
-        q_count = int(q_row.get("cnt", 0)) if q_row else 0
-
-        # 4. question_banks table accessible
-        cur.execute("SELECT COUNT(*) AS cnt FROM question_banks")
-        qb_row = cur.fetchone()
-        qb_count = int(qb_row.get("cnt", 0)) if qb_row else 0
+        # 1-4. Combine ping, database verification, and table counts into a single round-trip query
+        cur.execute(
+            "SELECT 1 AS ping, DATABASE() AS current_db, "
+            "(SELECT COUNT(*) FROM questions) AS q_cnt, "
+            "(SELECT COUNT(*) FROM question_banks) AS qb_cnt"
+        )
+        combined_res = cur.fetchone() or {}
+        ping_ok = bool(combined_res.get("ping") == 1 or (combined_res and list(combined_res.values())[0] == 1))
+        selected_db = combined_res.get("current_db")
+        q_count = int(combined_res.get("q_cnt", 0) or 0)
+        qb_count = int(combined_res.get("qb_cnt", 0) or 0)
 
         # 5. SSL Cipher check
         cur.execute("SHOW STATUS LIKE 'Ssl_cipher'")
@@ -282,7 +297,7 @@ def check_database_health() -> Dict[str, Any]:
             f"Question bank count: {qb_count}"
         )
 
-        return {
+        result = {
             "healthy": ping_ok and (selected_db == config.DB_NAME),
             "backend": "MySQL",
             "environment": config.APP_ENV,
@@ -294,6 +309,9 @@ def check_database_health() -> Dict[str, Any]:
             "question_bank_count": qb_count,
             "ssl_cipher": ssl_cipher,
         }
+        _HEALTH_CACHE = result
+        _HEALTH_CACHE_TIME = now
+        return result
 
     except Exception as err:
         safe_msg = _sanitize_error_msg(err)
@@ -338,9 +356,9 @@ class DatabaseManager:
         return {"success": False, "message": "Unknown error during DB connection test."}
 
     @staticmethod
-    def check_database_health() -> Dict[str, Any]:
+    def check_database_health(force: bool = False) -> Dict[str, Any]:
         """Performs comprehensive safe health check."""
-        return check_database_health()
+        return check_database_health(force=force)
 
     @staticmethod
     def initialize_schema() -> bool:

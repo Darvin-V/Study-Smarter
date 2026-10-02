@@ -628,10 +628,15 @@ def _go_to(page: str, **extra):
     st.rerun()
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def _cached_get_question_banks():
+    return QuestionRepository.get_question_banks()
+
+
 def _get_question_banks():
-    """Returns list of QuestionBankModel objects from MySQL."""
+    """Returns list of QuestionBankModel objects from MySQL with short-lived TTL caching."""
     try:
-        return QuestionRepository.get_question_banks()
+        return _cached_get_question_banks()
     except Exception as err:
         from src.utils.exceptions import DatabaseConnectionError
         if isinstance(err, DatabaseConnectionError):
@@ -865,7 +870,7 @@ def render_home_page(selected_bank_id=None, selected_bank_name="All Banks"):
     # ─── Stats Strip ─────────────────────────────────────────────────────
     try:
         _banks = _get_question_banks()
-        _total_qs = QuestionRepository.get_total_questions_in_bank(bank_id=None)
+        _total_qs = sum(b.question_count for b in _banks) if _banks else QuestionRepository.get_total_questions_in_bank(bank_id=None)
         _summary = AnalyticsService.get_overall_summary(user_id=1)
         _st = {
             "banks": len(_banks),
@@ -915,7 +920,7 @@ def render_home_page(selected_bank_id=None, selected_bank_name="All Banks"):
     )
 
     # ─── Recent Question Banks ───────────────────────────────────────────
-    banks = _get_question_banks()
+    banks = _banks
 
     # Header row with "View All" link
     rq_l, rq_r = st.columns([5, 1])
@@ -941,6 +946,8 @@ def render_home_page(selected_bank_id=None, selected_bank_name="All Banks"):
                 _go_to("upload")
     else:
         recent = sorted(banks, key=lambda b: b.id or 0, reverse=True)[:3]
+        recent_bids = [b.id for b in recent if b.id is not None]
+        bank_done_map = AttemptRepository.get_unique_questions_attempted_by_banks(user_id=1, bank_ids=recent_bids) if recent_bids else {}
         _pdf_grads = [
             ("linear-gradient(135deg,#EF4444,#F59E0B)", "#3B82F6"),
             ("linear-gradient(135deg,#3B82F6,#A855F7)", "#A855F7"),
@@ -950,11 +957,8 @@ def render_home_page(selected_bank_id=None, selected_bank_name="All Banks"):
         for i, (col, bank) in enumerate(zip(bank_cols, recent)):
             grad, bar_clr = _pdf_grads[i % 3]
             q_count = bank.question_count or 0
-            try:
-                done = AttemptRepository.get_unique_questions_attempted(user_id=1, bank_id=bank.id)
-                pct = round(done / q_count * 100) if q_count > 0 else 0
-            except Exception:
-                pct = 0
+            done = bank_done_map.get(bank.id, 0)
+            pct = round(done / q_count * 100) if q_count > 0 else 0
 
             with col:
                 st.html(
@@ -2096,7 +2100,7 @@ def render_quiz_page(selected_bank_id=None, selected_bank_name="All Banks"):
                 slider_max = max(5, bk.question_count or 10)
             else:
                 try:
-                    tot = QuestionRepository.get_total_questions_in_bank()
+                    tot = sum(b.question_count for b in banks) if banks else QuestionRepository.get_total_questions_in_bank()
                     slider_max = max(5, tot if tot > 0 else 50)
                 except Exception:
                     slider_max = 50
