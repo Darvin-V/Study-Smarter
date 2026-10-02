@@ -1761,7 +1761,7 @@ def render_upload_page(selected_bank_id=None, selected_bank_name="All Banks"):
                         status_container.empty()
                         progress_bar.empty()
 
-                        if result.get("success"):
+                        if result.get("success") and result.get("saved_count", 0) > 0 and result.get("ready_questions", 0) > 0:
                             total_ext = result.get("total_extracted", 0)
                             saved_q = result.get("saved_count", result.get("questions_saved", total_ext))
                             needs_r = result.get("review_count", result.get("needs_review", 0))
@@ -1830,6 +1830,7 @@ def render_upload_page(selected_bank_id=None, selected_bank_name="All Banks"):
                     st.session_state["current_eval"] = None
                     st.session_state["practice_bank_id"] = b_id
                     st.session_state["practice_bank_name"] = clean_bank_name
+                    st.session_state["qz_sel_bank"] = clean_bank_name
 
                 def _on_back_home():
                     st.session_state.pop("upload_success_data", None)
@@ -2030,6 +2031,11 @@ def render_quiz_page(selected_bank_id=None, selected_bank_name="All Banks"):
         default_idx = 0
         if presel_bank_name and presel_bank_name in bank_options:
             default_idx = bank_options.index(presel_bank_name)
+            st.session_state["qz_sel_bank"] = presel_bank_name
+        elif "qz_sel_bank" in st.session_state and st.session_state["qz_sel_bank"] in bank_options:
+            default_idx = bank_options.index(st.session_state["qz_sel_bank"])
+        else:
+            default_idx = 0
             st.session_state.pop("qz_sel_bank", None)
 
         cfg_col, info_col = st.columns([1.5, 1], gap="large")

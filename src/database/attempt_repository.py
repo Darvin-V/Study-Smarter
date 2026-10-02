@@ -41,6 +41,27 @@ class AttemptRepository:
             "question_text": q.question_text if q else "",
         })
 
+        # Validate foreign keys exist to satisfy MySQL relational integrity constraints
+        valid_quiz_id = attempt.quiz_id
+        if valid_quiz_id is not None:
+            try:
+                with get_db_cursor() as check_cur:
+                    check_cur.execute("SELECT id FROM quizzes WHERE id = %s", (valid_quiz_id,))
+                    if not check_cur.fetchone():
+                        valid_quiz_id = None
+            except Exception:
+                valid_quiz_id = None
+
+        valid_user_id = attempt.user_id
+        if valid_user_id is not None:
+            try:
+                with get_db_cursor() as check_cur:
+                    check_cur.execute("SELECT id FROM users WHERE id = %s", (valid_user_id,))
+                    if not check_cur.fetchone():
+                        valid_user_id = None
+            except Exception:
+                valid_user_id = None
+
         query = """
             INSERT INTO attempts (
                 user_id, quiz_id, question_id, selected_answer,
@@ -50,8 +71,8 @@ class AttemptRepository:
             )
         """
         params = (
-            attempt.user_id,
-            attempt.quiz_id,
+            valid_user_id,
+            valid_quiz_id,
             attempt.question_id,
             attempt.selected_answer,
             attempt.correct_answer,
@@ -110,10 +131,29 @@ class AttemptRepository:
                 %s, %s, %s, %s, %s, %s, %s
             )
         """
+        # Validate referenced foreign keys exist to satisfy relational integrity
+        existing_quiz_ids = set()
+        existing_user_ids = set()
+        try:
+            with get_db_cursor() as check_cur:
+                qids = list({att.quiz_id for att in attempts if att.quiz_id is not None})
+                if qids:
+                    fmt = ",".join(["%s"] * len(qids))
+                    check_cur.execute(f"SELECT id FROM quizzes WHERE id IN ({fmt})", tuple(qids))
+                    existing_quiz_ids = {r.get("id") if isinstance(r, dict) else r[0] for r in check_cur.fetchall()}
+
+                uids = list({att.user_id for att in attempts if att.user_id is not None})
+                if uids:
+                    fmt = ",".join(["%s"] * len(uids))
+                    check_cur.execute(f"SELECT id FROM users WHERE id IN ({fmt})", tuple(uids))
+                    existing_user_ids = {r.get("id") if isinstance(r, dict) else r[0] for r in check_cur.fetchall()}
+        except Exception:
+            pass
+
         params_list = [
             (
-                att.user_id,
-                att.quiz_id,
+                att.user_id if att.user_id in existing_user_ids else None,
+                att.quiz_id if att.quiz_id in existing_quiz_ids else None,
                 att.question_id,
                 att.selected_answer,
                 att.correct_answer,

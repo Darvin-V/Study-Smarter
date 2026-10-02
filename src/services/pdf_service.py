@@ -40,7 +40,17 @@ class PDFService:
         # Calculate file size
         size_bytes = getattr(uploaded_file, "size", None)
         if size_bytes is None:
+            if hasattr(uploaded_file, "seek"):
+                try:
+                    uploaded_file.seek(0)
+                except Exception:
+                    pass
             file_bytes = uploaded_file.getvalue() if hasattr(uploaded_file, "getvalue") else uploaded_file.read()
+            if hasattr(uploaded_file, "seek"):
+                try:
+                    uploaded_file.seek(0)
+                except Exception:
+                    pass
             size_bytes = len(file_bytes)
         size_mb = round(size_bytes / (1024 * 1024), 2)
 
@@ -62,7 +72,17 @@ class PDFService:
         timestamp = int(time.time())
         dest_path = UPLOADS_DIR / f"{timestamp}_{clean_name}"
 
+        if hasattr(uploaded_file, "seek"):
+            try:
+                uploaded_file.seek(0)
+            except Exception:
+                pass
         file_bytes = uploaded_file.getvalue() if hasattr(uploaded_file, "getvalue") else uploaded_file.read()
+        if hasattr(uploaded_file, "seek"):
+            try:
+                uploaded_file.seek(0)
+            except Exception:
+                pass
         with open(dest_path, "wb") as f:
             f.write(file_bytes)
 

@@ -341,8 +341,7 @@ CRITICAL INSTRUCTIONS:
                 bad_kw = [
                     "low confidence", "unable to determine", "held for review",
                     "flagged for review", "processing error", "unverified",
-                    "answer is a", "answer is b", "answer is c", "answer is d",
-                    "correct option is"
+                    "not enough information", "cannot be determined",
                 ]
                 is_valid_sol = (
                     len(solution) >= 15 and

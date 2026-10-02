@@ -24,20 +24,62 @@ else:
 def _get_setting(key: str, default: Any = None) -> Any:
     """
     Safely retrieves a configuration setting in order of priority:
-    1. OS environment variable
-    2. Streamlit Cloud secrets (st.secrets) if running under Streamlit
+    1. OS environment variables (exact, upper, lower)
+    2. Streamlit Cloud secrets (st.secrets):
+       - Exact key (e.g. "DB_HOST")
+       - Lowercase key (e.g. "db_host")
+       - Uppercase key (e.g. "DB_HOST")
+       - Nested table (e.g. st.secrets["mysql"]["host"] or st.secrets["connections"]["mysql"]["host"])
     3. Fallback default
     """
-    val = os.getenv(key)
-    if val is not None and str(val).strip() != "":
-        return str(val).strip()
+    # 1. OS environment variables
+    for k in (key, key.upper(), key.lower()):
+        val = os.getenv(k)
+        if val is not None and str(val).strip() != "":
+            return str(val).strip()
 
+    # 2. Streamlit Cloud secrets
     try:
         import streamlit as st
-        if hasattr(st, "secrets") and key in st.secrets:
-            secret_val = st.secrets[key]
-            if secret_val is not None and str(secret_val).strip() != "":
-                return str(secret_val).strip()
+        if hasattr(st, "secrets"):
+            # Direct / case lookup
+            for k in (key, key.upper(), key.lower()):
+                try:
+                    if k in st.secrets:
+                        secret_val = st.secrets[k]
+                        if secret_val is not None and str(secret_val).strip() != "":
+                            return str(secret_val).strip()
+                except Exception:
+                    pass
+
+            # Nested mysql/database table lookup
+            if key.startswith("DB_"):
+                suffix = key[3:].lower()  # e.g. "host", "port", "user", "password", "name", "ssl"
+                for section in ("mysql", "database", "connections"):
+                    try:
+                        if section in st.secrets:
+                            sec = st.secrets[section]
+                            if hasattr(sec, "get"):
+                                if section == "connections" and "mysql" in sec:
+                                    sec = sec["mysql"]
+                                sec_val = sec.get(suffix) or sec.get(suffix.upper()) or sec.get(key)
+                                if sec_val is not None and str(sec_val).strip() != "":
+                                    return str(sec_val).strip()
+                    except Exception:
+                        pass
+
+            # Nested ai / gemini table lookup
+            if key in ("GEMINI_API_KEY", "AI_API_KEY"):
+                for section in ("gemini", "ai", "google"):
+                    try:
+                        if section in st.secrets:
+                            sec = st.secrets[section]
+                            if hasattr(sec, "get"):
+                                sec_val = sec.get("api_key") or sec.get("key") or sec.get("GEMINI_API_KEY")
+                                if sec_val is not None and str(sec_val).strip() != "":
+                                    return str(sec_val).strip()
+                    except Exception:
+                        pass
     except Exception:
         pass
 
@@ -55,59 +97,108 @@ class Config:
     SUBTITLE: str = "Personal Question-Bank Practice System"
     VERSION: str = "2.0.0"
 
-    # Environment & Server
-    APP_ENV: str = _get_setting("APP_ENV", "development")
-    APP_HOST: str = _get_setting("APP_HOST", "localhost")
-    APP_PORT: int = int(_get_setting("APP_PORT", "8501"))
-    LOG_LEVEL: str = _get_setting("LOG_LEVEL", "INFO")
-
     # Analytics & Performance Thresholds
     WEAK_TOPIC_THRESHOLD: float = 60.0
     STRONG_TOPIC_THRESHOLD: float = 75.0
 
-    # Database Configuration (Cloud & Local MySQL)
-    DB_HOST: str = _get_setting("DB_HOST", "localhost")
-    DB_PORT: int = int(_get_setting("DB_PORT", "3306"))
-    DB_USER: str = _get_setting("DB_USER", "root")
-    DB_PASSWORD: str = _get_setting("DB_PASSWORD", "")
-    DB_NAME: str = _get_setting("DB_NAME", "study_smarter_db")
-    DB_TIMEOUT: int = int(_get_setting("DB_TIMEOUT", "10"))
-    DB_SSL_CA: Optional[str] = _get_setting("DB_SSL_CA", None)
-    DB_SSL_DISABLED: bool = str(_get_setting("DB_SSL_DISABLED", "false")).lower() in ("true", "1", "yes")
+    @property
+    def APP_ENV(self) -> str:
+        return _get_setting("APP_ENV", "development")
 
-    # AI Service Configuration (Gemini API)
-    GEMINI_API_KEY: str = _get_setting("GEMINI_API_KEY") or _get_setting("AI_API_KEY", "")
-    AI_API_KEY: str = GEMINI_API_KEY
-    AI_MODEL_NAME: str = _get_setting("AI_MODEL_NAME", "gemini-flash-lite-latest")
-    AI_MODEL_FALLBACK: str = _get_setting("AI_MODEL_FALLBACK", "gemini-flash-latest")
-    GEMINI_BATCH_SIZE: int = int(_get_setting("GEMINI_BATCH_SIZE", "10"))
+    @property
+    def APP_HOST(self) -> str:
+        return _get_setting("APP_HOST", "localhost")
 
-    # Admin & Review Controls
-    SHOW_ADMIN_REVIEW: bool = str(_get_setting("SHOW_ADMIN_REVIEW", "false")).strip().lower() in ("true", "1", "yes")
+    @property
+    def APP_PORT(self) -> int:
+        return int(_get_setting("APP_PORT", "8501"))
 
-    @classmethod
-    def validate_database_config(cls) -> bool:
+    @property
+    def LOG_LEVEL(self) -> str:
+        return _get_setting("LOG_LEVEL", "INFO")
+
+    @property
+    def DB_HOST(self) -> str:
+        return _get_setting("DB_HOST", "localhost")
+
+    @property
+    def DB_PORT(self) -> int:
+        return int(_get_setting("DB_PORT", "15536" if "aivencloud" in str(self.DB_HOST) else "3306"))
+
+    @property
+    def DB_USER(self) -> str:
+        return _get_setting("DB_USER", "avnadmin" if "aivencloud" in str(self.DB_HOST) else "root")
+
+    @property
+    def DB_PASSWORD(self) -> str:
+        return _get_setting("DB_PASSWORD", "")
+
+    @property
+    def DB_NAME(self) -> str:
+        return _get_setting("DB_NAME", "defaultdb")
+
+    @property
+    def DB_TIMEOUT(self) -> int:
+        return int(_get_setting("DB_TIMEOUT", "10"))
+
+    @property
+    def DB_SSL_CA(self) -> Optional[str]:
+        return _get_setting("DB_SSL_CA", None)
+
+    @property
+    def DB_SSL_DISABLED(self) -> bool:
+        # Check DB_SSL first (standard Streamlit / cloud secret)
+        db_ssl = _get_setting("DB_SSL")
+        if db_ssl is not None:
+            if str(db_ssl).strip().lower() in ("false", "0", "no", "disabled"):
+                return True
+            return False
+        return str(_get_setting("DB_SSL_DISABLED", "false")).lower() in ("true", "1", "yes")
+
+    @property
+    def GEMINI_API_KEY(self) -> str:
+        return _get_setting("GEMINI_API_KEY") or _get_setting("AI_API_KEY", "")
+
+    @property
+    def AI_API_KEY(self) -> str:
+        return self.GEMINI_API_KEY
+
+    @property
+    def AI_MODEL_NAME(self) -> str:
+        return _get_setting("AI_MODEL_NAME", "gemini-flash-lite-latest")
+
+    @property
+    def AI_MODEL_FALLBACK(self) -> str:
+        return _get_setting("AI_MODEL_FALLBACK", "gemini-flash-latest")
+
+    @property
+    def GEMINI_BATCH_SIZE(self) -> int:
+        return int(_get_setting("GEMINI_BATCH_SIZE", "10"))
+
+    @property
+    def SHOW_ADMIN_REVIEW(self) -> bool:
+        return str(_get_setting("SHOW_ADMIN_REVIEW", "false")).strip().lower() in ("true", "1", "yes")
+
+    def validate_database_config(self) -> bool:
         """Checks if minimum database parameters are configured."""
-        return bool(cls.DB_HOST and cls.DB_USER and cls.DB_NAME)
+        return bool(self.DB_HOST and self.DB_USER and self.DB_NAME)
 
-    @classmethod
-    def validate_gemini_config(cls) -> bool:
+    def validate_gemini_config(self) -> bool:
         """Checks if Gemini API key is configured."""
-        key = (cls.GEMINI_API_KEY or "").strip()
+        key = (self.GEMINI_API_KEY or "").strip()
         return bool(key and key != "your_gemini_api_key")
 
-    @classmethod
-    def get_status_summary(cls) -> Dict[str, str]:
+    def get_status_summary(self) -> Dict[str, str]:
         """
         Returns safe configuration status report without exposing sensitive credentials.
         """
-        db_ok = cls.validate_database_config()
-        ai_ok = cls.validate_gemini_config()
+        db_ok = self.validate_database_config()
+        ai_ok = self.validate_gemini_config()
         return {
-            "environment": cls.APP_ENV,
+            "environment": self.APP_ENV,
             "database_config": "Available" if db_ok else "Missing",
             "gemini_config": "Available" if ai_ok else "Missing",
-            "db_target": f"{cls.DB_HOST}:{cls.DB_PORT}/{cls.DB_NAME}",
+            "db_target": f"{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}",
         }
 
 

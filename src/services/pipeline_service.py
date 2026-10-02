@@ -208,24 +208,77 @@ class PipelineService:
         created_ids = QuestionRepository.create_questions_bulk(q_models)
         saved_count = len([q for q in q_models if getattr(q, "is_persisted", False)])
 
+        # Step 7: Read-back verification from Aiven MySQL to confirm durable persistence
+        read_back_count = 0
+        if bank_id is not None and saved_count > 0:
+            try:
+                verified_db_questions = QuestionRepository.get_all_questions(bank_id=bank_id)
+                read_back_count = len(verified_db_questions)
+                logger.info(f"Verified read-back from MySQL: {read_back_count} questions confirmed for bank_id={bank_id}")
+            except Exception as rb_err:
+                logger.error(f"Read-back verification query failed: {rb_err}")
+                read_back_count = 0
+
+        db_persisted = (saved_count > 0 and read_back_count > 0)
         update_step("Question bank ready!", 100)
 
-        db_persisted = (saved_count > 0)
-        if db_persisted:
-            persist_msg = f" Successfully saved {saved_count} practice question(s) to '{bank_name}'."
-        else:
-            persist_msg = " ⚠️ We couldn't save your questions permanently. Please check your storage settings and try again."
+        # Enforce strict success condition (Requirement 9: never claim success if 0 persisted)
+        if not db_persisted or saved_count == 0:
+            err_msg = f"Database persistence failed: questions for '{bank_name}' could not be committed to Aiven MySQL."
+            logger.error(err_msg)
+            return {
+                "success": False,
+                "message": err_msg,
+                "db_persisted": False,
+                "total_extracted": len(solved_questions),
+                "verified_count": 0,
+                "py_verified_count": 0,
+                "ai_verified_count": 0,
+                "out_of_scope_count": 0,
+                "review_count": len(needs_review_list),
+                "saved_count": 0,
+                "verified_questions": [],
+                "needs_review_questions": needs_review_list,
+                "bank_id": bank_id,
+                "bank_name": bank_name,
+                "questions_saved": 0,
+                "needs_review": len(needs_review_list),
+                "ready_questions": 0,
+            }
+
+        if len(verified_list) == 0:
+            err_msg = f"No questions in '{bank_name}' passed solution verification. Please verify GEMINI_API_KEY."
+            logger.warning(err_msg)
+            return {
+                "success": False,
+                "message": err_msg,
+                "db_persisted": db_persisted,
+                "total_extracted": len(solved_questions),
+                "verified_count": 0,
+                "py_verified_count": 0,
+                "ai_verified_count": 0,
+                "out_of_scope_count": 0,
+                "review_count": len(needs_review_list),
+                "saved_count": saved_count,
+                "verified_questions": [],
+                "needs_review_questions": needs_review_list,
+                "bank_id": bank_id,
+                "bank_name": bank_name,
+                "questions_saved": saved_count,
+                "needs_review": len(needs_review_list),
+                "ready_questions": 0,
+            }
 
         summary_msg = (
             f"Pipeline finished for '{bank_name}': {len(verified_list)} questions published "
             f"({py_verified_count} Verified, {ai_verified_count} AI Verified), "
-            f"{len(needs_review_list)} held for review.{persist_msg}"
+            f"{len(needs_review_list)} held for review. Successfully saved {saved_count} practice question(s) to '{bank_name}'."
         )
 
         return {
             "success": True,
             "message": summary_msg,
-            "db_persisted": db_persisted,
+            "db_persisted": True,
             "total_extracted": len(solved_questions),
             "verified_count": len(verified_list),
             "py_verified_count": py_verified_count,

@@ -70,9 +70,9 @@ def test_sql_parameterization():
         assert inserted_id == 42
         sql_inserted, params_inserted = mock_cursor.execute.call_args[0]
         assert "INSERT INTO questions" in sql_inserted
-        assert len(params_inserted) == 15
-        assert sql_inserted.count("%s") == 15
-        print("  [OK] Parameterized INSERT query syntax verified (15 parameters bound).")
+        assert len(params_inserted) == 16
+        assert sql_inserted.count("%s") == 16
+        print("  [OK] Parameterized INSERT query syntax verified (16 parameters bound).")
 
         # 2. Test READ (by ID)
         fetched = QuestionRepository.get_question_by_id(42)
