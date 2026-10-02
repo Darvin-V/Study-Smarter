@@ -24,26 +24,34 @@ else:
 def _get_setting(key: str, default: Any = None) -> Any:
     """
     Safely retrieves a configuration setting in order of priority:
-    1. OS environment variables (exact, upper, lower)
-    2. Streamlit Cloud secrets (st.secrets):
+    1. Streamlit Cloud secrets (st.secrets):
        - Exact key (e.g. "DB_HOST")
-       - Lowercase key (e.g. "db_host")
-       - Uppercase key (e.g. "DB_HOST")
-       - Nested table (e.g. st.secrets["mysql"]["host"] or st.secrets["connections"]["mysql"]["host"])
+       - Canonical aliases (e.g. "MYSQL_HOST", "MYSQL_DATABASE")
+       - Lowercase / Uppercase keys
+       - Nested tables (st.secrets["mysql"]["host"], st.secrets["gemini"]["api_key"])
+    2. OS environment variables (exact, aliases, upper, lower)
     3. Fallback default
     """
-    # 1. OS environment variables
-    for k in (key, key.upper(), key.lower()):
-        val = os.getenv(k)
-        if val is not None and str(val).strip() != "":
-            return str(val).strip()
+    # Key aliases for consistent cross-environment configuration
+    aliases = [key, key.upper(), key.lower()]
+    if key == "DB_HOST":
+        aliases.extend(["MYSQL_HOST", "mysql_host"])
+    elif key == "DB_NAME":
+        aliases.extend(["MYSQL_DATABASE", "mysql_database", "DATABASE_NAME", "database_name"])
+    elif key == "DB_PORT":
+        aliases.extend(["MYSQL_PORT", "mysql_port"])
+    elif key == "DB_USER":
+        aliases.extend(["MYSQL_USER", "mysql_user"])
+    elif key == "DB_PASSWORD":
+        aliases.extend(["MYSQL_PASSWORD", "mysql_password"])
+    elif key in ("GEMINI_API_KEY", "AI_API_KEY"):
+        aliases.extend(["GEMINI_API_KEY", "AI_API_KEY", "gemini_api_key", "ai_api_key"])
 
-    # 2. Streamlit Cloud secrets
+    # 1. Streamlit Cloud secrets (Highest Priority in Cloud Deployment)
     try:
         import streamlit as st
         if hasattr(st, "secrets"):
-            # Direct / case lookup
-            for k in (key, key.upper(), key.lower()):
+            for k in aliases:
                 try:
                     if k in st.secrets:
                         secret_val = st.secrets[k]
@@ -53,8 +61,8 @@ def _get_setting(key: str, default: Any = None) -> Any:
                     pass
 
             # Nested mysql/database table lookup
-            if key.startswith("DB_"):
-                suffix = key[3:].lower()  # e.g. "host", "port", "user", "password", "name", "ssl"
+            if key.startswith("DB_") or "MYSQL" in key:
+                suffix = key[3:].lower() if key.startswith("DB_") else key.replace("MYSQL_", "").lower()
                 for section in ("mysql", "database", "connections"):
                     try:
                         if section in st.secrets:
@@ -83,6 +91,12 @@ def _get_setting(key: str, default: Any = None) -> Any:
     except Exception:
         pass
 
+    # 2. OS environment variables (Local .env or container environment)
+    for k in aliases:
+        val = os.getenv(k)
+        if val is not None and str(val).strip() != "":
+            return str(val).strip()
+
     return default
 
 
@@ -104,6 +118,16 @@ class Config:
     @property
     def APP_ENV(self) -> str:
         return _get_setting("APP_ENV", "development")
+
+    @property
+    def is_production(self) -> bool:
+        """Determines if the application is running in production mode or using a remote cloud DB."""
+        env = str(self.APP_ENV).strip().lower()
+        if env in ("production", "prod"):
+            return True
+        if "aivencloud" in str(self.DB_HOST).lower():
+            return True
+        return False
 
     @property
     def APP_HOST(self) -> str:

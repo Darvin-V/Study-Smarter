@@ -70,6 +70,9 @@ class QuizService:
                 db_questions = combined
 
             except Exception as err:
+                from src.config import config
+                if config.is_production:
+                    raise
                 logger.warning(f"Failed to fetch questions from MySQL: {err}")
                 db_questions = []
 

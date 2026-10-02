@@ -94,6 +94,10 @@ class QuestionRepository:
                         class_level=int(row.get("class_level", 0)),
                     ))
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             logger.warning(f"Could not fetch question banks from MySQL: {err}")
         return banks
 
@@ -279,7 +283,11 @@ class QuestionRepository:
                 row = cursor.fetchone()
                 if row:
                     return int(row["cnt"] if isinstance(row, dict) else row[0])
-        except Exception:
+        except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             pass
         return len(QuestionRepository._MEMORY_QUESTIONS)
 
@@ -353,6 +361,10 @@ class QuestionRepository:
                 logger.info(f"Inserted question ID={question_id} bank_id={question.bank_id}")
                 return question_id
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             from src.utils.exceptions import DatabaseConnectionError
             if isinstance(err, DatabaseConnectionError):
                 logger.warning(f"MySQL offline ({err}). Buffering question in memory repository.")
@@ -456,8 +468,16 @@ class QuestionRepository:
                 row = cursor.fetchone()
                 if row:
                     return QuestionRepository._row_to_model(row)
-        except Exception:
+        except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             pass
+
+        from src.config import config
+        if config.is_production:
+            return None
 
         for q in QuestionRepository._MEMORY_QUESTIONS:
             if q.id == question_id:
@@ -491,8 +511,17 @@ class QuestionRepository:
                 rows = cursor.fetchall()
                 if rows:
                     return [QuestionRepository._row_to_model(row) for row in rows]
+                return []
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             logger.info(f"MySQL unavailable ({err}); serving questions from memory.")
+
+        from src.config import config
+        if config.is_production:
+            return []
 
         result = list(QuestionRepository._MEMORY_QUESTIONS)
         if bank_id is not None:
@@ -518,8 +547,17 @@ class QuestionRepository:
                 rows = cursor.fetchall()
                 if rows:
                     return [QuestionRepository._row_to_model(row) for row in rows]
+                return []
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             logger.info(f"MySQL unavailable ({err}); serving questions from memory.")
+
+        from src.config import config
+        if config.is_production:
+            return []
 
         res = [q for q in QuestionRepository._MEMORY_QUESTIONS if q.class_level == class_level]
         if subject:
@@ -536,8 +574,17 @@ class QuestionRepository:
                 rows = cursor.fetchall()
                 if rows:
                     return [QuestionRepository._row_to_model(row) for row in rows]
+                return []
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             logger.info(f"MySQL unavailable ({err}); serving status questions from memory.")
+
+        from src.config import config
+        if config.is_production:
+            return []
 
         return [q for q in QuestionRepository._MEMORY_QUESTIONS if q.verification_status == verification_status]
 

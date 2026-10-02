@@ -632,7 +632,10 @@ def _get_question_banks():
     """Returns list of QuestionBankModel objects from MySQL."""
     try:
         return QuestionRepository.get_question_banks()
-    except Exception:
+    except Exception as err:
+        from src.utils.exceptions import DatabaseConnectionError
+        if isinstance(err, DatabaseConnectionError):
+            st.error("Database connection unavailable. Please try again shortly.")
         return []
 
 
@@ -1774,6 +1777,10 @@ def render_upload_page(selected_bank_id=None, selected_bank_name="All Banks"):
                                 "total_ext": total_ext,
                                 "ready_q": ready_q,
                             }
+                            try:
+                                st.cache_data.clear()
+                            except Exception:
+                                pass
                             st.rerun()
                         else:
                             err_msg = result.get("message") or "We couldn't process this question bank. Please check your PDF and try again."
@@ -2102,40 +2109,47 @@ def render_quiz_page(selected_bank_id=None, selected_bank_name="All Banks"):
             st.markdown('<div style="height:12px;"></div>', unsafe_allow_html=True)
             st.markdown('<div class="ss-btn-p">', unsafe_allow_html=True)
             if st.button("Start Practice Quiz →", key="qz_start", use_container_width=True):
-                with st.spinner("Preparing your quiz..."):
-                    quiz = QuizService.fetch_quiz_questions_by_bank(
-                        bank_id=sel_bank_id,
-                        bank_name=sel_bank_name,
-                        limit=question_count,
-                        user_id=1,
-                    )
-                if not quiz.questions:
-                    st.warning("⚠️ No questions available for this selection. Please upload a question bank PDF first!")
-                else:
-                    quiz_record_id = None
-                    try:
-                        with get_db_cursor() as cursor:
-                            cursor.execute(
-                                "INSERT INTO quizzes (title, class_level, subject, total_questions) VALUES (%s, %s, %s, %s)",
-                                (quiz.title, quiz.class_level, quiz.subject, len(quiz.questions))
-                            )
-                            quiz_record_id = cursor.lastrowid
-                    except Exception as q_err:
-                        logger.warning(f"Could not initialize quiz session in MySQL: {q_err}")
+                try:
+                    with st.spinner("Preparing your quiz..."):
+                        quiz = QuizService.fetch_quiz_questions_by_bank(
+                            bank_id=sel_bank_id,
+                            bank_name=sel_bank_name,
+                            limit=question_count,
+                            user_id=1,
+                        )
+                    if not quiz.questions:
+                        st.warning("⚠️ No questions available for this selection. Please upload a question bank PDF first!")
+                    else:
+                        quiz_record_id = None
+                        try:
+                            with get_db_cursor() as cursor:
+                                cursor.execute(
+                                    "INSERT INTO quizzes (title, class_level, subject, total_questions) VALUES (%s, %s, %s, %s)",
+                                    (quiz.title, quiz.class_level, quiz.subject, len(quiz.questions))
+                                )
+                                quiz_record_id = cursor.lastrowid
+                        except Exception as q_err:
+                            logger.warning(f"Could not initialize quiz session in MySQL: {q_err}")
 
-                    st.session_state.update({
-                        "quiz_active": True,
-                        "quiz_completed": False,
-                        "quiz_model": quiz,
-                        "quiz_session_id": quiz_record_id,
-                        "quiz_summary": None,
-                        "current_q_index": 0,
-                        "user_responses": [],
-                        "start_time": time.time(),
-                        "submitted_current": False,
-                        "current_eval": None,
-                    })
-                    st.rerun()
+                        st.session_state.update({
+                            "quiz_active": True,
+                            "quiz_completed": False,
+                            "quiz_model": quiz,
+                            "quiz_session_id": quiz_record_id,
+                            "quiz_summary": None,
+                            "current_q_index": 0,
+                            "user_responses": [],
+                            "start_time": time.time(),
+                            "submitted_current": False,
+                            "current_eval": None,
+                        })
+                        st.rerun()
+                except Exception as err:
+                    from src.utils.exceptions import DatabaseConnectionError
+                    if isinstance(err, DatabaseConnectionError):
+                        st.error("Database connection unavailable. Please try again shortly.")
+                    else:
+                        st.error(f"Error starting quiz: {err}")
             st.markdown("</div>", unsafe_allow_html=True)
 
         with info_col:

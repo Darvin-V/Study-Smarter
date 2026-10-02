@@ -56,6 +56,10 @@ if __name__ == "__main__":
 
     if is_streamlit:
         logger.info("Starting Study Smarter Streamlit Web Interface...")
+        try:
+            DatabaseManager.check_database_health()
+        except Exception:
+            pass
         from src.ui.app_ui import render_ui
         render_ui()
     else:

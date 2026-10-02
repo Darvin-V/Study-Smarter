@@ -87,6 +87,10 @@ class AttemptRepository:
                 logger.info(f"Recorded attempt ID={attempt_id} for Question ID={attempt.question_id}")
                 return attempt_id
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             from src.utils.exceptions import DatabaseConnectionError
             if isinstance(err, DatabaseConnectionError):
                 logger.warning(f"MySQL unavailable ({err}). Attempt buffered only in memory; NOT saved to MySQL.")
@@ -170,6 +174,10 @@ class AttemptRepository:
                 logger.info(f"Recorded {recorded_count} question attempt logs into database.")
                 return recorded_count
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             from src.utils.exceptions import DatabaseConnectionError
             if isinstance(err, DatabaseConnectionError):
                 logger.warning(f"MySQL unavailable ({err}). Buffered {len(attempts)} attempts in memory; NOT saved to MySQL.")
@@ -210,8 +218,17 @@ class AttemptRepository:
                 rows = cursor.fetchall()
                 if rows:
                     return rows
+                return []
         except Exception as err:
+            from src.config import config
+            if config.is_production:
+                from src.utils.exceptions import DatabaseConnectionError
+                raise DatabaseConnectionError("Database connection unavailable. Please try again shortly.") from err
             logger.info(f"MySQL unavailable ({err}); serving attempts from memory buffer.")
+
+        from src.config import config
+        if config.is_production:
+            return []
 
         mem = [a for a in AttemptRepository._MEMORY_ATTEMPTS if a.get("user_id") == user_id]
         if bank_id is not None:

@@ -213,6 +213,100 @@ def init_db() -> bool:
         raise DatabaseQueryError(f"Database schema initialization failed: {safe_msg}") from err
 
 
+def check_database_health() -> Dict[str, Any]:
+    """
+    Performs safe internal database health check without leaking credentials:
+    - connection established
+    - SELECT 1 works
+    - expected database selected
+    - questions table accessible
+    - question_banks table accessible
+    Returns safe status dictionary.
+    """
+    if not MYSQL_AVAILABLE:
+        return {
+            "healthy": False,
+            "backend": "MySQL",
+            "environment": config.APP_ENV,
+            "connection": "failed",
+            "message": "Driver missing: 'mysql-connector-python' not installed.",
+        }
+
+    try:
+        conn = get_db_connection(use_database=True, force_retry=True)
+        if not conn or not conn.is_connected():
+            return {
+                "healthy": False,
+                "backend": "MySQL",
+                "environment": config.APP_ENV,
+                "connection": "failed",
+                "message": "Connection to MySQL could not be established.",
+            }
+
+        cur = conn.cursor(dictionary=True)
+
+        # 1. SELECT 1 ping
+        cur.execute("SELECT 1 AS ping")
+        ping_res = cur.fetchone()
+        ping_ok = bool(ping_res and (ping_res.get("ping") == 1 or list(ping_res.values())[0] == 1))
+
+        # 2. Expected database
+        cur.execute("SELECT DATABASE() AS current_db")
+        db_res = cur.fetchone()
+        selected_db = db_res.get("current_db") if db_res else None
+
+        # 3. questions table accessible
+        cur.execute("SELECT COUNT(*) AS cnt FROM questions")
+        q_row = cur.fetchone()
+        q_count = int(q_row.get("cnt", 0)) if q_row else 0
+
+        # 4. question_banks table accessible
+        cur.execute("SELECT COUNT(*) AS cnt FROM question_banks")
+        qb_row = cur.fetchone()
+        qb_count = int(qb_row.get("cnt", 0)) if qb_row else 0
+
+        # 5. SSL Cipher check
+        cur.execute("SHOW STATUS LIKE 'Ssl_cipher'")
+        ssl_row = cur.fetchone()
+        ssl_cipher = ssl_row.get("Value") if ssl_row else None
+
+        cur.close()
+        conn.close()
+
+        logger.info(
+            f"Database backend: MySQL | "
+            f"Database environment: {config.APP_ENV} | "
+            f"Database connection: successful | "
+            f"Selected database: {selected_db} | "
+            f"Question count: {q_count} | "
+            f"Question bank count: {qb_count}"
+        )
+
+        return {
+            "healthy": ping_ok and (selected_db == config.DB_NAME),
+            "backend": "MySQL",
+            "environment": config.APP_ENV,
+            "connection": "successful",
+            "selected_database": selected_db,
+            "expected_database": config.DB_NAME,
+            "ping": ping_ok,
+            "question_count": q_count,
+            "question_bank_count": qb_count,
+            "ssl_cipher": ssl_cipher,
+        }
+
+    except Exception as err:
+        safe_msg = _sanitize_error_msg(err)
+        logger.error(f"Database health check failed: {safe_msg}")
+        return {
+            "healthy": False,
+            "backend": "MySQL",
+            "environment": config.APP_ENV,
+            "connection": "failed",
+            "message": safe_msg,
+        }
+
+
 class DatabaseManager:
     """Helper class for managing database operations and health diagnostics."""
 
@@ -242,6 +336,11 @@ class DatabaseManager:
             return {"success": False, "message": f"Connection check failed: {_sanitize_error_msg(err)}"}
 
         return {"success": False, "message": "Unknown error during DB connection test."}
+
+    @staticmethod
+    def check_database_health() -> Dict[str, Any]:
+        """Performs comprehensive safe health check."""
+        return check_database_health()
 
     @staticmethod
     def initialize_schema() -> bool:
