@@ -2039,15 +2039,13 @@ def render_quiz_page(selected_bank_id=None, selected_bank_name="All Banks"):
         bank_options = ["All Banks"] + [b.name for b in banks]
         bank_id_map = {"All Banks": None, **{b.name: b.id for b in banks}}
 
-        default_idx = 0
-        if presel_bank_name and presel_bank_name in bank_options:
-            default_idx = bank_options.index(presel_bank_name)
+        # Respect explicit card pre-selection (e.g. from Home or Question Banks cards)
+        if presel_bank_name and presel_bank_name != "All Banks" and presel_bank_name in bank_options:
             st.session_state["qz_sel_bank"] = presel_bank_name
-        elif "qz_sel_bank" in st.session_state and st.session_state["qz_sel_bank"] in bank_options:
-            default_idx = bank_options.index(st.session_state["qz_sel_bank"])
-        else:
-            default_idx = 0
-            st.session_state.pop("qz_sel_bank", None)
+
+        # Ensure active selection is valid; fallback to "All Banks" if needed
+        if "qz_sel_bank" in st.session_state and st.session_state["qz_sel_bank"] not in bank_options:
+            st.session_state["qz_sel_bank"] = "All Banks"
 
         cfg_col, info_col = st.columns([1.5, 1], gap="large")
 
@@ -2055,7 +2053,6 @@ def render_quiz_page(selected_bank_id=None, selected_bank_name="All Banks"):
             sel_bank_name = st.selectbox(
                 "Question Bank",
                 bank_options,
-                index=default_idx,
                 key="qz_sel_bank",
             )
             sel_bank_id = bank_id_map.get(sel_bank_name)
